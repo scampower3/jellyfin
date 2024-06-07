@@ -601,7 +601,7 @@ namespace Emby.Server.Implementations.Data
             transaction.Commit();
         }
 
-        private void SaveItemsInTransaction(SqliteConnection db, IEnumerable<(BaseItem Item, List<Guid> AncestorIds, BaseItem TopParent, string UserDataKey, List<string> InheritedTags)> tuples)
+        private void SaveItemsInTransaction(ManagedConnection db, IEnumerable<(BaseItem Item, List<Guid> AncestorIds, BaseItem TopParent, string UserDataKey, List<string> InheritedTags)> tuples)
         {
             using (var saveItemStatement = PrepareStatement(db, SaveItemCommandText))
             using (var deleteAncestorsStatement = PrepareStatement(db, "delete from AncestorIds where ItemId=@ItemId"))
@@ -1261,7 +1261,7 @@ namespace Emby.Server.Implementations.Data
 
             CheckDisposed();
 
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, _retrieveItemColumnsSelectQuery))
             {
                 statement.TryBind("@guid", id);
@@ -1887,7 +1887,7 @@ namespace Emby.Server.Implementations.Data
             CheckDisposed();
 
             var chapters = new List<ChapterInfo>();
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, "select StartPositionTicks,Name,ImagePath,ImageDateModified from " + ChaptersTableName + " where ItemId = @ItemId order by ChapterIndex asc"))
             {
                 statement.TryBind("@ItemId", item.Id);
@@ -1906,7 +1906,7 @@ namespace Emby.Server.Implementations.Data
         {
             CheckDisposed();
 
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, "select StartPositionTicks,Name,ImagePath,ImageDateModified from " + ChaptersTableName + " where ItemId = @ItemId and ChapterIndex=@ChapterIndex"))
             {
                 statement.TryBind("@ItemId", item.Id);
@@ -1980,7 +1980,7 @@ namespace Emby.Server.Implementations.Data
             transaction.Commit();
         }
 
-        private void InsertChapters(Guid idBlob, IReadOnlyList<ChapterInfo> chapters, SqliteConnection db)
+        private void InsertChapters(Guid idBlob, IReadOnlyList<ChapterInfo> chapters, ManagedConnection db)
         {
             var startIndex = 0;
             var limit = 100;
@@ -2469,7 +2469,7 @@ namespace Emby.Server.Implementations.Data
             var commandText = commandTextBuilder.ToString();
 
             using (new QueryTimeLogger(Logger, commandText))
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText))
             {
                 if (EnableJoinUserData(query))
@@ -2537,7 +2537,7 @@ namespace Emby.Server.Implementations.Data
             var commandText = commandTextBuilder.ToString();
             var items = new List<BaseItem>();
             using (new QueryTimeLogger(Logger, commandText))
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText))
             {
                 if (EnableJoinUserData(query))
@@ -2745,7 +2745,7 @@ namespace Emby.Server.Implementations.Data
 
             var list = new List<BaseItem>();
             var result = new QueryResult<BaseItem>();
-            using var connection = GetConnection();
+            using var connection = GetConnection(true);
             using var transaction = connection.BeginTransaction();
             if (!isReturningZeroItems)
             {
@@ -2927,7 +2927,7 @@ namespace Emby.Server.Implementations.Data
             var commandText = commandTextBuilder.ToString();
             var list = new List<Guid>();
             using (new QueryTimeLogger(Logger, commandText))
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText))
             {
                 if (EnableJoinUserData(query))
@@ -4476,7 +4476,7 @@ where AncestorIdText not null and ItemValues.Value not null and ItemValues.Type 
             transaction.Commit();
         }
 
-        private void ExecuteWithSingleParam(SqliteConnection db, string query, Guid value)
+        private void ExecuteWithSingleParam(ManagedConnection db, string query, Guid value)
         {
             using (var statement = PrepareStatement(db, query))
             {
@@ -4509,7 +4509,7 @@ where AncestorIdText not null and ItemValues.Value not null and ItemValues.Type 
             }
 
             var list = new List<string>();
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText.ToString()))
             {
                 // Run this again to bind the params
@@ -4547,7 +4547,7 @@ where AncestorIdText not null and ItemValues.Value not null and ItemValues.Type 
             }
 
             var list = new List<PersonInfo>();
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText.ToString()))
             {
                 // Run this again to bind the params
@@ -4632,7 +4632,7 @@ AND Type = @InternalPersonType)");
             return whereClauses;
         }
 
-        private void UpdateAncestors(Guid itemId, List<Guid> ancestorIds, SqliteConnection db, SqliteCommand deleteAncestorsStatement)
+        private void UpdateAncestors(Guid itemId, List<Guid> ancestorIds, ManagedConnection db, SqliteCommand deleteAncestorsStatement)
         {
             if (itemId.IsEmpty())
             {
@@ -4787,7 +4787,7 @@ AND Type = @InternalPersonType)");
 
             var list = new List<string>();
             using (new QueryTimeLogger(Logger, commandText))
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, commandText))
             {
                 foreach (var row in statement.ExecuteQuery())
@@ -4987,8 +4987,8 @@ AND Type = @InternalPersonType)");
             var list = new List<(BaseItem, ItemCounts)>();
             var result = new QueryResult<(BaseItem, ItemCounts)>();
             using (new QueryTimeLogger(Logger, commandText))
-            using (var connection = GetConnection())
-            using (var transaction = connection.BeginTransaction(deferred: true))
+            using (var connection = GetConnection(true))
+            using (var transaction = connection.BeginTransaction())
             {
                 if (!isReturningZeroItems)
                 {
@@ -5148,7 +5148,7 @@ AND Type = @InternalPersonType)");
             return list;
         }
 
-        private void UpdateItemValues(Guid itemId, List<(int MagicNumber, string Value)> values, SqliteConnection db)
+        private void UpdateItemValues(Guid itemId, List<(int MagicNumber, string Value)> values, ManagedConnection db)
         {
             if (itemId.IsEmpty())
             {
@@ -5167,7 +5167,7 @@ AND Type = @InternalPersonType)");
             InsertItemValues(itemId, values, db);
         }
 
-        private void InsertItemValues(Guid id, List<(int MagicNumber, string Value)> values, SqliteConnection db)
+        private void InsertItemValues(Guid id, List<(int MagicNumber, string Value)> values, ManagedConnection db)
         {
             const int Limit = 100;
             var startIndex = 0;
@@ -5239,7 +5239,7 @@ AND Type = @InternalPersonType)");
             transaction.Commit();
         }
 
-        private void InsertPeople(Guid id, List<PersonInfo> people, SqliteConnection db)
+        private void InsertPeople(Guid id, List<PersonInfo> people, ManagedConnection db)
         {
             const int Limit = 100;
             var startIndex = 0;
@@ -5335,7 +5335,7 @@ AND Type = @InternalPersonType)");
 
             cmdText += " order by StreamIndex ASC";
 
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             {
                 var list = new List<MediaStream>();
 
@@ -5388,7 +5388,7 @@ AND Type = @InternalPersonType)");
             transaction.Commit();
         }
 
-        private void InsertMediaStreams(Guid id, IReadOnlyList<MediaStream> streams, SqliteConnection db)
+        private void InsertMediaStreams(Guid id, IReadOnlyList<MediaStream> streams, ManagedConnection db)
         {
             const int Limit = 10;
             var startIndex = 0;
@@ -5722,7 +5722,7 @@ AND Type = @InternalPersonType)");
             cmdText += " order by AttachmentIndex ASC";
 
             var list = new List<MediaAttachment>();
-            using (var connection = GetConnection())
+            using (var connection = GetConnection(true))
             using (var statement = PrepareStatement(connection, cmdText))
             {
                 statement.TryBind("@ItemId", query.ItemId);
@@ -5772,7 +5772,7 @@ AND Type = @InternalPersonType)");
         private void InsertMediaAttachments(
             Guid id,
             IReadOnlyList<MediaAttachment> attachments,
-            SqliteConnection db,
+            ManagedConnection db,
             CancellationToken cancellationToken)
         {
             const int InsertAtOnce = 10;
