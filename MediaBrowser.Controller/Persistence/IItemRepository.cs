@@ -135,10 +135,10 @@ namespace MediaBrowser.Controller.Persistence
         List<BaseItem> GetItemList(InternalItemsQuery query);
 
         /// <summary>
-        /// Gets the item list.
+        /// Gets the item list. Used mainly by the latest api endpoint.
         /// </summary>
         /// <param name="query">The query.</param>
-        /// <param name="collectionType">Type of the collection.</param>
+        /// <param name="collectionType">Collection Type.</param>
         /// <returns>List&lt;BaseItem&gt;.</returns>
         List<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType);
 
