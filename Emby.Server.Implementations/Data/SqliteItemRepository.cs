@@ -2605,14 +2605,21 @@ namespace Emby.Server.Implementations.Data
                 _ => null
             };
 
+            var sortColumn = query.OrderBy switch
+            {
+                var x when x.Any(i => i.OrderBy == ItemSortBy.DateCreated) => "DateCreated",
+                var x when x.Any(i => i.OrderBy == ItemSortBy.PremiereDate) => "PremiereDate",
+                _ => null
+            };
+
             // Early exit if the distinct column is null
-            if (string.IsNullOrEmpty(distintColumn))
+            if (string.IsNullOrEmpty(distintColumn) || string.IsNullOrEmpty(sortColumn))
             {
                 return Enumerable.Empty<BaseItem>().ToList();
             }
 
             var commandTextBuilder = new StringBuilder("WITH DistinctNames AS (SELECT ", 2048)
-                .AppendJoin(',', [distintColumn, "MAX(DateCreated) as MaxDate"])
+                .AppendJoin(',', [distintColumn, $"MAX({sortColumn}) as MaxDate"])
                 .Append(FromText)
                 .Append(GetJoinUserDataText(query));
 
@@ -2629,7 +2636,9 @@ namespace Emby.Server.Implementations.Data
                 .Append(distintColumn);
 
             // Order by the date created
-            commandTextBuilder.Append(" ORDER BY DateCreated DESC");
+            commandTextBuilder.Append(" ORDER BY ")
+                .Append(sortColumn)
+                .Append(" DESC");
 
             // Limit the number of results then close the with statement
             commandTextBuilder.Append(" LIMIT ")
@@ -2650,7 +2659,9 @@ namespace Emby.Server.Implementations.Data
             }
 
             // Add last where clause to filter by the min MaxDate value
-            commandTextBuilder.Append(" AND DateCreated >= (SELECT MIN(MaxDate) FROM DistinctNames)");
+            commandTextBuilder.Append(" AND ")
+                .Append(sortColumn)
+                .Append(" >= (SELECT MIN(MaxDate) FROM DistinctNames)");
             // Add orderby
             commandTextBuilder.Append(GetOrderByText(query));
 
