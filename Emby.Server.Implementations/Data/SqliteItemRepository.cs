@@ -2592,7 +2592,7 @@ namespace Emby.Server.Implementations.Data
             return items;
         }
 
-        public List<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType)
+        public IReadOnlyList<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType)
         {
             ArgumentNullException.ThrowIfNull(query);
 
@@ -2608,7 +2608,7 @@ namespace Emby.Server.Implementations.Data
             // Early exit if the distinct column is null
             if (string.IsNullOrEmpty(distintColumn))
             {
-                return Enumerable.Empty<BaseItem>().ToList();
+                return Array.Empty<BaseItem>();
             }
 
             var commandTextBuilder = new StringBuilder("WITH DistinctNames AS (SELECT ", 2048)

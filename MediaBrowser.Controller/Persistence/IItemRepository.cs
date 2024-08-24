@@ -140,7 +140,7 @@ namespace MediaBrowser.Controller.Persistence
         /// <param name="query">The query.</param>
         /// <param name="collectionType">Collection Type.</param>
         /// <returns>List&lt;BaseItem&gt;.</returns>
-        List<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType);
+        IReadOnlyList<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType);
 
         /// <summary>
         /// Updates the inherited values.

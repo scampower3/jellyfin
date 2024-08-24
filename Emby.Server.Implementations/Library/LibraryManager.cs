@@ -1339,7 +1339,7 @@ namespace Emby.Server.Implementations.Library
             return _itemRepository.GetItemList(query);
         }
 
-        public List<BaseItem> GetItemList(InternalItemsQuery query, List<BaseItem> parents, CollectionType collectionType)
+        public IReadOnlyList<BaseItem> GetItemList(InternalItemsQuery query, IReadOnlyList<BaseItem> parents, CollectionType collectionType)
         {
             SetTopParentIdsOrAncestors(query, parents);
 
