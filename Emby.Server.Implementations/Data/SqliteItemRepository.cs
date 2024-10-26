@@ -2588,6 +2588,7 @@ namespace Emby.Server.Implementations.Data
             return items;
         }
 
+        /// <inheritdoc />
         public IReadOnlyList<BaseItem> GetLatestItemList(InternalItemsQuery query, CollectionType collectionType)
         {
             ArgumentNullException.ThrowIfNull(query);
