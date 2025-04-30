@@ -248,6 +248,8 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.TV
 
             series.CommunityRating = Convert.ToSingle(seriesResult.VoteAverage);
 
+            series.Tagline = seriesResult.Tagline;
+
             series.Overview = seriesResult.Overview;
 
             if (seriesResult.Networks is not null)
